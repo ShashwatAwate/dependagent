@@ -1,59 +1,65 @@
-from langchain_mistralai import ChatMistralAI
-from dotenv import load_dotenv
+from langchain.agents import tool
+# from dotenv import load_dotenv
 import json
 import re
+import requests
+from pprint import pprint
 
-load_dotenv()
+
+# load_dotenv()
 candidate_list = []
 candidate_purpose = {}
-model = ChatMistralAI(model='mistral-large-latest')
+rejected_packages = []
+python_version = None
 
-def print_can_datastructures():
-    print(candidate_list)
-    print(candidate_purpose)
+def validate_candidates(package_name):
+        print(f"trying to fetch data for {package_name}")
+        endpoint_template = f"https://pypi.org/pypi/{package_name}/json"
+        try:
+            response = requests.get(endpoint_template)
+            # pprint(response.text[:20])
+            if response.status_code == 404 or response.status_code==500:
+                print(f"module name {package_name} is not found in pypi")
+                candidate_list.remove(package_name)
+                candidate_purpose.remove(package_name)
+                rejected_packages.append(package_name)
+            else:
+                try:
+                    json_response = json.loads(response.text)
+                    pprint(json_response)
+                except Exception as e:
+                    print(f"error: {str(e)}")
+                    return None
+            pass
+        except Exception as e:
+            print("error ",str(e))
+            return None
+    
 
-def parse_model_response(res):
+def suggest_candidates(cans: dict):
+    """
+        Adds the suggested candidates to a list and a description dictionary.
+    """
+    for candidate,purpose in cans.items():
+        candidate_list.append(candidate)
+        candidate_purpose[candidate] = purpose
+
+def parse_model_response(res,candidate_list,candidate_purpose):
     pattern = r"```json(.*?)```"
     matches = re.findall(pattern,res,re.DOTALL)
     for m in matches:
         data = json.loads(m.strip())
+        python_version = data['python_version']
         for cans in data['packages']:
             can_name = cans['name']
             can_purpose = cans['purpose']
             candidate_list.append(can_name)
             candidate_purpose[can_name] = can_purpose
 
-def validate_candidates():
-    pass
-def start():
 
-    user_message = input("What do you wanna build?\n")
-
-    prompt_template = f"""
-    You are a highly skilled Python engineer specializing in almost everything related to Python Packages.
-    You have to provide a minimal list of correct and viable starter packages a user needs to install in their virtual environment according to the topic they have mentioned in the
-    following message.
-    USER MESSAGE : {user_message}
-    Return the list in valid **JSON FORMAT ONLY**
-    **DO NOT INCLUDE ANY ADDITIONAL TEXT, SALUTATIONS OR ANYTHING ELSE. JUST JSON**
-    **ONLY FOLLOW THE FOLLOWING FORMAT**
-    ```json
-    {{
-        "packages":[
-        {{
-            "name": "",
-            "purpose": ""
-        }}
-        ]
-    }}
-    """
-    res = model.invoke(prompt_template)
-    parse_model_response(res.content)
-
-
-if __name__ == "__main__":
-    start()
-    print_can_datastructures()
+def add_user_candidates(candidate):
+    candidate_list.append(candidate)
+    candidate_purpose[candidate] = "user added package"
 
 
 
