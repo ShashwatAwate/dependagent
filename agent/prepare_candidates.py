@@ -4,62 +4,93 @@ import json
 import re
 import requests
 from pprint import pprint
+import traceback
 
-
+from main.core import model,State
 # load_dotenv()
-candidate_list = []
-candidate_purpose = {}
-rejected_packages = []
-python_version = None
 
-def validate_candidates(package_name):
-        print(f"trying to fetch data for {package_name}")
-        endpoint_template = f"https://pypi.org/pypi/{package_name}/json"
-        try:
-            response = requests.get(endpoint_template)
-            # pprint(response.text[:20])
-            if response.status_code == 404 or response.status_code==500:
-                print(f"module name {package_name} is not found in pypi")
-                candidate_list.remove(package_name)
-                candidate_purpose.remove(package_name)
-                rejected_packages.append(package_name)
-            else:
-                try:
-                    json_response = json.loads(response.text)
-                    pprint(json_response)
-                except Exception as e:
-                    print(f"error: {str(e)}")
-                    return None
-            pass
-        except Exception as e:
-            print("error ",str(e))
-            return None
+def validate_candidates(state: State):
+        """
+        Validates the candidates proposed under PyPi API.
+        """
+        print("currently at validation state")
+        can_list = state["candidate_list"]
+        accepted_cans = []
+        rejected_cans = [] 
+        for package_name in can_list:
+            print(f"trying to fetch data for {package_name}")
+            endpoint_template = f"https://pypi.org/pypi/{package_name}/json"
+            try:
+                response = requests.get(endpoint_template)
+                # pprint(response.text[:20])
+                if response.status_code == 404 or response.status_code==500:
+                    print(f"module name {package_name} is not found in pypi")
+                    rejected_cans.append(package_name)
+                else:
+                    try:
+                        json_response = json.loads(response.text)
+                        accepted_cans.append(json_response["info"]["name"])
+                        pprint(json_response["info"]["name"])
+                    except Exception as e:
+                        print(f"exception in loading json response from PYPi(validation): {str(e)}")
+                        print(f"Exception type: {type(e).__name__}")
+                        # print("validation traceback",traceback.print_stack())
+                        return {"accepted_candidates":[],"rejected_candidates":[]}
+                pass
+            except Exception as e:
+                print("exception during validation",str(e))
+                print("Exception type: ",type(e).__name__)
+                return {"accepted_candidates":[],"rejected_candidates":[]}
+        return {"accepted_candidates":accepted_cans,"rejected_candidates":rejected_cans}
     
 
-def suggest_candidates(cans: dict):
-    """
-        Adds the suggested candidates to a list and a description dictionary.
-    """
-    for candidate,purpose in cans.items():
-        candidate_list.append(candidate)
-        candidate_purpose[candidate] = purpose
-
-def parse_model_response(res,candidate_list,candidate_purpose):
+def parse_model_response(res,can_list):
     pattern = r"```json(.*?)```"
     matches = re.findall(pattern,res,re.DOTALL)
     for m in matches:
         data = json.loads(m.strip())
-        python_version = data['python_version']
         for cans in data['packages']:
             can_name = cans['name']
-            can_purpose = cans['purpose']
-            candidate_list.append(can_name)
-            candidate_purpose[can_name] = can_purpose
+            can_list.append(can_name)
 
 
-def add_user_candidates(candidate):
-    candidate_list.append(candidate)
-    candidate_purpose[candidate] = "user added package"
+
+def suggest_candidates(state: State):
+    """
+        Adds the suggested candidates to a list and a description dictionary.
+    """
+    can_list = []
+    # user_input = state["messages"][-1] if state["messages"] else ""
+    print("currently at suggest candidates")
+    history = state["messages"] if state["messages"] else "how to make data science virtual env"
+    suggest_prompt_template = f"""
+        You are an expert in Python Packages.
+        You have to suggest 5 starter packages based on the  project topic suggested by the user:
+        HISTORY: {history}
+        ONLY RESPOND IN JSON. FOLLOW THE BELOW FORMAT ONLY :-
+        ```json
+        {{
+            "packages" : [
+            {{
+                "name": "",
+            }}]
+        }}
+        ```
+        DO NOT inlcude any extra text, salutations or explanations or reasoning.
+    """
+    try:
+        res = model.invoke(suggest_prompt_template)
+        print(res.content)
+    except Exception as e:
+        print("exception at suggest candidates: ",str(e))
+        return {"candidate_list": [],"next_node":None}
+
+    if res:
+        parse_model_response(res.content,can_list)
+    else:
+        print("model response not recieved during suggestions")
+    return {"candidate_list":can_list, "next_node":None}
+
 
 
 

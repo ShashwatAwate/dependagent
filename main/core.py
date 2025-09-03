@@ -17,6 +17,8 @@ def add_to_list(prev: list, new: list) -> list:
 
 model = ChatMistralAI(model='mistral-large-latest',api_key=os.getenv("MISTRAL_API_KEY"))
 
+
+
 class State(TypedDict):
     messages: Annotated[list,add_messages]
     candidate_list: list

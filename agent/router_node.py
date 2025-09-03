@@ -3,10 +3,11 @@ import json
 import re
 
 def router_node(state: State):
-    user_input = state["messages"][-1] if state["messages"] else input("what do you want to do?")
-
+    user_input = state["messages"][-1] if state["messages"] else ""
+    print(user_input.content)
+    print("currently at router node")
     router_prompt = f"""
-USER INPUT: {user_input}
+USER INPUT: {user_input.content}
 Based on the user input Decide whether this is:
 if general QnA route to "chatbot"
 if request for suggestion of packages for building a virtual environment route to "suggestions"
@@ -21,6 +22,7 @@ DO NOT include any other text, salutations or reasoning, only RETURN VALID JSON.
         pattern = r"```json(.*?)```"
         match = re.findall(pattern,raw_resp.content,re.DOTALL)[0]
         json_res = json.loads(match)
+        print("JSON RESPONSE: ",json_res)
         print("JSON RESPONSE OF NEXT NODE AT ROUTER: ",json_res["next_node"])
         return {"next_node": json_res["next_node"]}
     except Exception as e:
