@@ -14,7 +14,7 @@ def validate_candidates(state: State):
         Validates the candidates proposed under PyPi API.
         """
         print("currently at validation state")
-        can_list = state["candidate_list"]
+        can_list = state["current_candidates"]
         accepted_cans = []
         rejected_cans = [] 
         for package_name in can_list:
@@ -65,7 +65,7 @@ def suggest_candidates(state: State):
     history = state["messages"] if state["messages"] else "how to make data science virtual env"
     suggest_prompt_template = f"""
         You are an expert in Python Packages.
-        You have to suggest 5 starter packages based on the  project topic suggested by the user:
+        You have to suggest 5 starter packages based on the  project topic suggested by the user OR provide 5 alternatives for a package stated by the user:
         HISTORY: {history}
         ONLY RESPOND IN JSON. FOLLOW THE BELOW FORMAT ONLY :-
         ```json
@@ -83,13 +83,13 @@ def suggest_candidates(state: State):
         print(res.content)
     except Exception as e:
         print("exception at suggest candidates: ",str(e))
-        return {"candidate_list": [],"next_node":None}
+        return {"candidate_list": [],"current_candidates":[],"next_node":None}
 
     if res:
         parse_model_response(res.content,can_list)
     else:
         print("model response not recieved during suggestions")
-    return {"candidate_list":can_list, "next_node":None}
+    return {"current_candidates":can_list,"candidate_list":can_list, "next_node":None}
 
 
 

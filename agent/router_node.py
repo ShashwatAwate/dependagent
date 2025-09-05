@@ -12,6 +12,8 @@ Based on the user input Decide whether this is:
 if general QnA route to "chatbot"
 if request for suggestion of packages for building a virtual environment route to "suggestions"
 if package installation  "validation"
+if asked for alternatives of a certain node route to "alternatives"
+
 Return with JSON Field "next_node".
 DO NOT include any other text, salutations or reasoning, only RETURN VALID JSON.
 """
