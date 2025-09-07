@@ -35,13 +35,16 @@ def validate_candidates(state: State):
                         print(f"exception in loading json response from PYPi(validation): {str(e)}")
                         print(f"Exception type: {type(e).__name__}")
                         # print("validation traceback",traceback.print_stack())
-                        return {"accepted_candidates":[],"rejected_candidates":[]}
+                        return {"accepted_candidates":[],"rejected_candidates":[],"next_node":"end"}
                 pass
             except Exception as e:
                 print("exception during validation",str(e))
                 print("Exception type: ",type(e).__name__)
-                return {"accepted_candidates":[],"rejected_candidates":[]}
-        return {"accepted_candidates":accepted_cans,"rejected_candidates":rejected_cans}
+                return {"accepted_candidates":[],"rejected_candidates":[],"next_node":"end"}
+        if rejected_cans==[]:
+            return {"accepted_candidates":accepted_cans,"rejected_candidates":[],"next_node":"display"}
+        else:
+            return {"accepted_candidates":accepted_cans,"rejected_candidates":rejected_cans,"next_node":"alternatives"}
     
 
 def parse_model_response(res,can_list):

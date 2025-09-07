@@ -6,6 +6,7 @@ import traceback
 from agent.prepare_candidates import suggest_candidates,validate_candidates
 from agent.router_node import router_node
 from agent.alternatives import suggest_alternatives
+from agent.display_cans import display_cans
 from .core import tool_node
 
 from .core import State,chatbot
@@ -23,9 +24,9 @@ def router_conditional(state: State):
 def route_tools(state: State):
     """This function will return 'tools' if tool_node is to be routed to, else it will route to router"""
     if isinstance(state,list):
-        ai_message = state[-1]
+        ai_message = state["messages"][-1]
     elif messages := state.get("messages",[]):
-        ai_message = state[-1]
+        ai_message = state["messages"][-1]
     else:
         raise ValueError(f"No messages found in input for tool_edge {state}")
     
@@ -52,6 +53,7 @@ graph_builder.add_node(chatbot)
 graph_builder.add_node(suggest_candidates)
 graph_builder.add_node(validate_candidates)
 graph_builder.add_node(suggest_alternatives)
+graph_builder.add_node(display_cans)
 graph_builder.add_node("tool_node",tool_node)
 
 #                           -----EDGES-----
@@ -61,20 +63,27 @@ graph_builder.add_conditional_edges(
     {
         "chatbot":"chatbot",
         "suggestions": "suggest_candidates",
-        "validation":"validate_candidates",
-        "alternatives":"suggest_alternatives"
     }
 )
 graph_builder.add_conditional_edges(
-    "chatbot",route_tools,
+    "suggest_alternatives",router_conditional,
     {
-        "tools":"tool_node",
-        "router":"router_node"
+        "end":END,
+        "validation":"validate_candidates",
+        "display": "display_cans"
+    }
+)
+graph_builder.add_conditional_edges(
+    "validate_candidates",router_conditional,
+    {
+        "end":END,
+        "display":"display_cans",
+        "alternatives":"suggest_alternatives"
     }
 )
 graph_builder.add_edge("chatbot",END)
 graph_builder.add_edge("suggest_candidates","validate_candidates")
-graph_builder.add_edge("validate_candidates",END)
+graph_builder.add_edge("display_cans",END)
 
 graph = graph_builder.compile()
 

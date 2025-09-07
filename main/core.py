@@ -59,8 +59,8 @@ class State(TypedDict):
 
 
 
-# model = ChatMistralAI(model='mistral-large-latest',api_key=os.getenv("MISTRAL_API_KEY"))
-model = ChatGoogleGenerativeAI(model="gemini-2.5-flash",api_key=os.getenv("GOOGLE_API_KEY"))
+model = ChatMistralAI(model='mistral-large-latest',api_key=os.getenv("MISTRAL_API_KEY"))
+# model = ChatGoogleGenerativeAI(model="gemini-2.5-flash",api_key=os.getenv("GOOGLE_API_KEY"))
 model_with_tools = model.bind_tools(tools)
 
 
