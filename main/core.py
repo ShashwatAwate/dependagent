@@ -56,6 +56,8 @@ class State(TypedDict):
     next_node : str
     need_search: bool
     pck_op : str
+    python_ver : str
+    venv_path : str
 
 
 

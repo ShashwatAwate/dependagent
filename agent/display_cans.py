@@ -15,4 +15,5 @@ def display_cans(state: State):
     # print("Do you want to add or remove any packages or need help regarding these packages? Let me know!")
     message_content += "Do you want to add or remove any packages or need help regarding these packages? Let me know! \n"
     state["messages"].append(AIMessage(content=message_content))
+    state["accepted_candidates"] =accepted_cans
     return state

@@ -15,7 +15,7 @@ def suggest_alternatives(state: State) -> list:
     current_cans = []
     for package in rejected_cans:
     
-        web_content = get_correct_name_tool(package)
+        web_content = get_correct_name_tool.invoke(package)
         if(web_content==""):
             alts_prompt = f"""
             Suggest single best alternative for the python package {package}.
@@ -38,7 +38,9 @@ def suggest_alternatives(state: State) -> list:
             except Exception as e:
                 print(f"Exception during suggesting alternatives: {str(e)}")
                 print(f"Exception type: {type(e).__name__}")
-                return {"current_candidates":[],"next_node":"end"}
+                state["current_candidates"] = []
+                state["next_node"] = "end"
+                return state
         else:
             pckg_extraction_prompt = f"""
 Given the below text, find the correct python package name from it:
@@ -63,8 +65,12 @@ Follow the below format:
             except Exception as e:
                 print(f"Exception during suggesting alternatives: {str(e)}")
                 print(f"Exception type: {type(e).__name__}")
-                return {"current_candidates":[],"next_node":"end"}    
-    return {"current_candidates":current_cans,"next_node":"validation"}
+                state["current_candidates"] = []
+                state["next_node"] = "end"
+                return state
+    state["current_candidates"] = current_cans 
+    state["next_node"] = "validation"  
+    return state
     time.sleep(3**2)
 
 

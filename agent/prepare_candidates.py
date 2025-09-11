@@ -41,10 +41,15 @@ def validate_candidates(state: State):
                 print("exception during validation",str(e))
                 print("Exception type: ",type(e).__name__)
                 return {"accepted_candidates":[],"rejected_candidates":[],"next_node":"end"}
+        print("accepted cans at validation node ",accepted_cans)
+
+        state["accepted_candidates"] = accepted_cans
+        state["rejected_candidates"] = rejected_cans
         if rejected_cans==[]:
-            return {"accepted_candidates":accepted_cans,"rejected_candidates":[],"next_node":"display"}
+            state["next_node"] = "display"
         else:
-            return {"accepted_candidates":accepted_cans,"rejected_candidates":rejected_cans,"next_node":"alternatives"}
+            state["next_node"] = "alternatives"
+        return state
     
 
 def parse_model_response(res,can_list):
@@ -86,13 +91,19 @@ def suggest_candidates(state: State):
         print(res.content)
     except Exception as e:
         print("exception at suggest candidates: ",str(e))
-        return {"candidate_list": [],"current_candidates":[],"next_node":None}
+        state["candidate_list"] = []
+        state["current_candidates"] = []
+        state["next_node"] = "end"
+        return state
 
     if res:
         parse_model_response(res.content,can_list)
     else:
         print("model response not recieved during suggestions")
-    return {"current_candidates":can_list,"candidate_list":can_list, "next_node":None}
+    state["candidate_list"] = can_list
+    state["current_candidates"] = can_list
+    state["next_node"] = "validation"
+    return state
 
 
 

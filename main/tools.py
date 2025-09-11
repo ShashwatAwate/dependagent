@@ -2,6 +2,8 @@
 from langchain_tavily import TavilySearch
 from langchain_core.tools import tool
 
+import requests
+import json
 
 import os
 from dotenv import load_dotenv
@@ -26,7 +28,24 @@ def get_correct_name_tool(package_name):
         print("exception type: ",type(e).__name__)
     return ""
 
+@tool
+def get_pypi_requirements(package_name):
+    """Get requirements of a package from PyPI"""
+
+    pypi_endpoint = f"https://pypi.org/pypi/{package_name}/json"
+    try:
+        res = requests.get(pypi_endpoint)
+        if res.status_code==404 or res.status_code==500:
+            print(f"{package_name} not found in pypi")
+            return ""
+        json_res = json.loads(res.text)
+        requirements = json_res["info"]["requires_dist"]
+        print(requirements)
+        print(type(requirements))        
+    except Exception as e:
+        print(f"Exception at getting pypi requirements {str(e)}")
+        print(f"exception type: {type(e).__name__}")
 
 if __name__ == "__main__":
-    package = "readis"
-    get_correct_name_tool(package)
+    package = "opencv-python"
+    get_pypi_requirements.invoke(package)

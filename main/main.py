@@ -7,6 +7,7 @@ from agent.prepare_candidates import suggest_candidates,validate_candidates
 from agent.router_node import router_node
 from agent.alternatives import suggest_alternatives
 from agent.display_cans import display_cans
+from agent.build_venv import build_env
 from .core import tool_node
 
 from .core import State,chatbot
@@ -54,6 +55,7 @@ graph_builder.add_node(suggest_candidates)
 graph_builder.add_node(validate_candidates)
 graph_builder.add_node(suggest_alternatives)
 graph_builder.add_node(display_cans)
+graph_builder.add_node(build_env)
 graph_builder.add_node("tool_node",tool_node)
 
 #                           -----EDGES-----
@@ -63,6 +65,7 @@ graph_builder.add_conditional_edges(
     {
         "chatbot":"chatbot",
         "suggestions": "suggest_candidates",
+        "build": "build_env"
     }
 )
 graph_builder.add_conditional_edges(
