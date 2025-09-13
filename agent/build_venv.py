@@ -86,7 +86,9 @@ def build_env(state: State):
             print(res)
 
         subprocess.run([venv_python,"-m","pip","install","-r","requirements.txt"],check=True)
-        return{"python_ver":sys.version,"venv_path":venv_python}
+        state["python_ver"] = sys.version
+        state["venv_path"] = venv_python
+        return state
 
     except Exception as e:
         print(f"Exception in building venv: {str(e)}")

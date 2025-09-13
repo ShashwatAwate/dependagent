@@ -84,27 +84,33 @@ graph_builder.add_conditional_edges(
         "alternatives":"suggest_alternatives"
     }
 )
-graph_builder.add_edge("chatbot",END)
+graph_builder.add_edge("chatbot","router_node")
 graph_builder.add_edge("suggest_candidates","validate_candidates")
-graph_builder.add_edge("display_cans",END)
+graph_builder.add_edge("display_cans","router_node")
+graph_builder.add_edge("build_env",END)
 
 graph = graph_builder.compile()
 
-
+initial_state: State = {
+    "messages": [],
+    "candidate_list": [],
+    "current_candidates": [],
+    "accepted_candidates": [],
+    "rejected_candidates": [],
+    "next_node": "router_node",
+    "need_search": False,
+    "pck_op": "",
+    "python_ver": "",
+    "venv_path": "",
+}
 
 if __name__ == "__main__":
-    while True:
-        try:
-            
-            user_input = input("enter a message ")
-            if user_input.lower() in ["quit",'q']:
-                print("exiting")
-                break
-            stream_graph_updates(user_input)
-            pass
-        except Exception as e:
-            print("exception occured during execution of graph: ",str(e))
-            traceback.print_exc()
-            fallback_input = "What is the meaning of AI?"
-            stream_graph_updates(fallback_input)
+
+    for event in graph.stream(initial_state,stream_mode="values"):
+        if "messages" in event and event["messages"]:
+            print("Assistant:", event["messages"][-1].content)
+        if "__interrupt__" in event:
+            # router paused, ask user
+            user_in = input("> ")
+            event["__interrupt__"].resume(user_in)
     pass

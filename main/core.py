@@ -6,6 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph.message import add_messages
 from langchain_core.messages import ToolMessage
 
+
 from .tools import get_correct_name_tool
 
 import json
@@ -59,14 +60,17 @@ class State(TypedDict):
     python_ver : str
     venv_path : str
 
+    
 
 
-model = ChatMistralAI(model='mistral-large-latest',api_key=os.getenv("MISTRAL_API_KEY"))
-# model = ChatGoogleGenerativeAI(model="gemini-2.5-flash",api_key=os.getenv("GOOGLE_API_KEY"))
+
+# model = ChatMistralAI(model='mistral-large-latest',api_key=os.getenv("MISTRAL_API_KEY"))
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash",api_key=os.getenv("GOOGLE_API_KEY"))
 model_with_tools = model.bind_tools(tools)
 
 
 
 def chatbot(state: State):
     """Gives the message history to the llm and we get response appended to the 'messages' """
-    return {"messages": [model_with_tools.invoke(state['messages'])]}
+    state["messages"].append(model_with_tools.invoke(state["messages"]))
+    return state

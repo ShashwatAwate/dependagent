@@ -12,3 +12,4 @@ def res_to_json(content: str) -> json:
         print(f"res_to_json exception:{str(e)}")
         print(f"exception type: {type(e).__name__}")
         return None
+    

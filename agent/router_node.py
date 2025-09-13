@@ -1,10 +1,21 @@
 from main.core import model,State
+
 import json
 import re
 
+from langgraph.types import interrupt
+from langchain_core.messages import HumanMessage
+from langgraph.graph import END
+
 def router_node(state: State):
-    user_input = state["messages"][-1] if state["messages"] else ""
-    print(user_input.content)
+    # user_input = state["messages"][-1] if state["messages"] else ""
+    user_input = input("enter a message (q to quit)")
+    if user_input.strip().lower() in ["q","quit"]:
+        return {"messages":[HumanMessage(content="User exited.")]},END
+    
+    state["messages"].append(HumanMessage(content=user_input))
+
+    print(user_input)
     print("currently at router node")
 
     print(state.get("accepted_candidates"))
@@ -12,7 +23,7 @@ def router_node(state: State):
     print(state.get("rejected_candidates"))
 
     router_prompt = f"""
-USER INPUT: {user_input.content}
+USER INPUT: {user_input}
 Based on the user input Decide whether this is:
 if general QnA route to "chatbot"
 if request for suggestion for building a virtual environment route to "suggestions"
